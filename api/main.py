@@ -59,6 +59,11 @@ def create_app(model_path: str | Path | None = None) -> FastAPI:
         }
 
     return app
+@app.get("/")
+def root():
+    return {"status": "ok"}
+
 
 
 app = create_app()
+
