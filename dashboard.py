@@ -8,11 +8,11 @@ from typing import Any
 import requests
 import streamlit as st
 
-API_URL = st.secrets.get("API_URL", "http://127.0.0.1:8000")
-def predict(customer):
-   response = requests.post(f"{API_URL.rstrip('/')}/predict", json=payload, timeout=30)
-    response.raise_for_status()
-    return response.json()
+try:
+    API_URL = st.secrets["API_URL"]
+except Exception:
+    API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
+
 
 FIELD_ORDER = [
     ("gender", "Gender", ["Female", "Male"]),
@@ -67,8 +67,10 @@ def build_payload() -> dict[str, Any]:
         container = left if index % 2 == 0 else right
         with container:
             if options is None:
-                if key in {"tenure"}:
-                    payload[key] = int(st.number_input(label, min_value=0, max_value=100, value=int(DEFAULTS[key])))
+                if key == "tenure":
+                    payload[key] = int(
+                        st.number_input(label, min_value=0, max_value=100, value=int(DEFAULTS[key]))
+                    )
                 else:
                     payload[key] = float(st.number_input(label, min_value=0.0, value=float(DEFAULTS[key])))
             else:
