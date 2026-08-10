@@ -9,3 +9,4 @@ mlruns/
 mlflow.db
 .streamlit/secrets.toml
 *.log
+.agents/
