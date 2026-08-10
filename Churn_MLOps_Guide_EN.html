@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Churn MLOps &mdash; Student Build Guide</title><style>
+*{box-sizing:border-box}
+body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#12241f;line-height:1.55;margin:0;background:#f2f7f5}
+.wrap{max-width:980px;margin:0 auto;padding:26px 20px 70px}
+header{background:linear-gradient(135deg,#0b5c4b,#12a17f);color:#fff;border-radius:16px;padding:26px 28px;margin-bottom:22px}
+header h1{margin:0 0 6px;font-size:26px}header p{margin:0;opacity:.93;font-size:14px}
+.badges{margin-top:14px}
+.badge{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:3px 11px;font-size:12px;margin:3px 5px 0 0}
+h2{font-size:20px;color:#0b5c4b;border-bottom:2px solid #cfe6df;padding-bottom:6px;margin:34px 0 12px}
+h3{font-size:15px;color:#123;margin:18px 0 6px}
+p{margin:8px 0}
+.note{background:#e9f5f1;border-left:4px solid #12a17f;border-radius:8px;padding:12px 16px;margin:14px 0}
+.warn{background:#fff4e5;border-left:4px solid #e08600;border-radius:8px;padding:12px 16px;margin:14px 0}
+.good{background:#e9f8ef;border-left:4px solid #12a150;border-radius:8px;padding:12px 16px;margin:14px 0}
+.code{background:#0e1f1a;color:#dcefe8;border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:Consolas,"SF Mono",Menlo,monospace;font-size:12.4px;line-height:1.5;white-space:pre}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13px;background:#fff}
+th,td{border:1px solid #d3e5df;padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#e6f2ee;color:#0b5c4b}
+td.pts{text-align:center;font-weight:700;white-space:nowrap}
+.phase{background:#fff;border:1px solid #d9e8e3;border-radius:12px;padding:16px 18px;margin:16px 0;box-shadow:0 1px 2px rgba(20,60,50,.05)}
+.phase .tag{display:inline-block;background:#0b5c4b;color:#fff;font-weight:700;border-radius:6px;padding:2px 9px;font-size:12px;margin-right:8px}
+.phase h3{display:inline;color:#0b5c4b}
+.do{margin:10px 0 4px;font-weight:700;color:#0b5c4b}
+.why{color:#4a5b56;font-size:13px;margin:4px 0}
+.have{background:#e9f8ef;border-radius:8px;padding:8px 12px;margin-top:10px;font-size:13px}
+.have b{color:#0a7d43}
+.pill{display:inline-block;background:#e6f2ee;border:1px solid #cadfd8;border-radius:6px;padding:1px 7px;font-size:12px;font-family:Consolas,monospace}
+.diagram{overflow-x:auto;background:#fff;border:1px solid #d9e8e3;border-radius:12px;padding:16px;margin:14px 0}
+ul{margin:8px 0;padding-left:22px}li{margin:4px 0}
+.muted{color:#5b6b66;font-size:12.5px}
+</style></head><body><div class="wrap">
+
+<header>
+  <h1>Telecom Churn &mdash; a full MLOps pipeline</h1>
+  <p>Build a model that predicts which customers will leave &mdash; then serve it, ship it, and make it retrain itself.</p>
+  <div class="badges">
+    <span class="badge">Senior level</span>
+    <span class="badge">100% free &middot; no card</span>
+    <span class="badge">No Hugging Face</span>
+    <span class="badge">MLflow &middot; FastAPI &middot; Streamlit</span>
+    <span class="badge">Real dataset</span>
+  </div>
+</header>
+
+<h2>What you are building</h2>
+<p>Most student projects stop at a notebook with an accuracy score. This one is the <b>whole machine-learning
+lifecycle</b> &mdash; the parts a real company needs:</p>
+<ul>
+  <li><b>Train</b> a churn model and <b>track</b> every experiment (MLflow).</li>
+  <li><b>Serve</b> it as an API (FastAPI) and give it a <b>web app</b> (Streamlit).</li>
+  <li><b>Test</b> it automatically and <b>ship</b> it with CI/CD &mdash; including a model that <b>retrains itself</b>.</li>
+</ul>
+<div class="diagram">
+<svg viewBox="0 0 940 250" width="920" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial" font-size="12.5">
+  <defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+    <path d="M0,0 L7,3 L0,6 Z" fill="#5b6b66"/></marker></defs>
+  <rect x="10"  y="30" width="120" height="46" rx="9" fill="#e9f5f1" stroke="#12a17f"/>
+  <text x="70" y="49" text-anchor="middle" font-weight="700">Data (CSV)</text><text x="70" y="65" text-anchor="middle" font-size="11">7,043 customers</text>
+  <line x1="130" y1="53" x2="176" y2="53" stroke="#5b6b66" marker-end="url(#a)"/>
+  <rect x="178" y="26" width="150" height="54" rx="9" fill="#e9f5f1" stroke="#12a17f"/>
+  <text x="253" y="47" text-anchor="middle" font-weight="700">Train + MLflow</text><text x="253" y="65" text-anchor="middle" font-size="11">compare models</text>
+  <line x1="328" y1="53" x2="374" y2="53" stroke="#5b6b66" marker-end="url(#a)"/>
+  <rect x="376" y="30" width="120" height="46" rx="9" fill="#eef4ff" stroke="#3b6fe0"/>
+  <text x="436" y="49" text-anchor="middle" font-weight="700">model.pkl</text><text x="436" y="65" text-anchor="middle" font-size="11">best model</text>
+  <line x1="496" y1="53" x2="542" y2="53" stroke="#5b6b66" marker-end="url(#a)"/>
+  <rect x="544" y="30" width="120" height="46" rx="9" fill="#e9f5f1" stroke="#12a17f"/>
+  <text x="604" y="49" text-anchor="middle" font-weight="700">FastAPI</text><text x="604" y="65" text-anchor="middle" font-size="11">/predict</text>
+  <line x1="664" y1="53" x2="710" y2="53" stroke="#5b6b66" marker-end="url(#a)"/>
+  <rect x="712" y="30" width="120" height="46" rx="9" fill="#e9f5f1" stroke="#12a17f"/>
+  <text x="772" y="49" text-anchor="middle" font-weight="700">Streamlit</text><text x="772" y="65" text-anchor="middle" font-size="11">web app</text>
+  <rect x="120" y="150" width="700" height="60" rx="10" fill="#fff7ea" stroke="#e08600"/>
+  <text x="470" y="176" text-anchor="middle" font-weight="700" fill="#a35a00">GitHub Actions (CI/CD)</text>
+  <text x="470" y="195" text-anchor="middle" font-size="11" fill="#a35a00">test on every push  ·  retrain weekly  ·  auto-deploy to Render</text>
+  <line x1="253" y1="80" x2="300" y2="150" stroke="#e08600" stroke-dasharray="4" marker-end="url(#a)"/>
+  <line x1="604" y1="80" x2="600" y2="150" stroke="#e08600" stroke-dasharray="4" marker-end="url(#a)"/>
+</svg>
+</div>
+<p class="muted">Green = the app path. Orange = the automation (GitHub Actions) that tests, retrains, and deploys it.</p>
+
+<h2>What you need (all free)</h2>
+<table>
+  <tr><th>What</th><th>Where</th><th>Cost</th></tr>
+  <tr><td>Laptop, 8 GB RAM</td><td>Windows / Mac / Linux</td><td>have it</td></tr>
+  <tr><td>VS Code + Python 3.11</td><td>code.visualstudio.com &middot; python.org</td><td>Free</td></tr>
+  <tr><td>GitHub account</td><td>github.com</td><td>Free</td></tr>
+  <tr><td>Render account (API host)</td><td>render.com</td><td>Free &middot; no card</td></tr>
+  <tr><td>Streamlit Community Cloud (UI host)</td><td>streamlit.io/cloud</td><td>Free</td></tr>
+  <tr><td>The dataset</td><td>downloaded in Phase A (public IBM data)</td><td>Free</td></tr>
+</table>
+
+<h2>Project structure</h2>
+<pre class="code">churn-mlops/
+├─ data/telco_churn.csv          the real dataset (7,043 customers)
+├─ src/
+│   ├─ preprocess.py             clean + feature pipeline (train AND serve)
+│   └─ train.py                  train, track in MLflow, save best model
+├─ api/
+│   ├─ schema.py                 the typed input (one customer)
+│   └─ main.py                   FastAPI: /predict, /health
+├─ dashboard.py                  Streamlit web app
+├─ tests/test_pipeline.py        CI quality gate
+├─ models/model.pkl              the saved model (created by train.py)
+├─ Dockerfile
+├─ requirements.txt
+└─ .github/workflows/
+    ├─ ci.yml                    test on every push
+    └─ retrain.yml               retrain weekly</pre>
+
+<h2>Build it, phase by phase</h2>
+<p class="muted">Each step tells you <b>what to do</b>, the code, <b>why</b> it matters, and <b>what you have</b> after.</p>
+<div class="phase"><span class="tag">Phase A</span><h3>Set up the project and get the data</h3><div class="do">Do: Open a terminal and create a clean environment, install the libraries:</div><pre class="code"># make the project and a clean environment
+mkdir churn-mlops &amp;&amp; cd churn-mlops
+python -m venv venv
+source venv/bin/activate           # Windows: venv\Scripts\activate
+pip install pandas scikit-learn mlflow joblib fastapi &quot;uvicorn[standard]&quot; streamlit pydantic requests pytest</pre><div class="why">Why: A virtual environment keeps this project's libraries separate. No Hugging Face, no paid tools.</div><div class="do">Do: Download the real dataset:</div><pre class="code"># download the real dataset into a data/ folder
+mkdir data
+curl -L -o data/telco_churn.csv \
+  https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv
+# 7043 rows, 21 columns</pre><div class="why">Why: Real data is the whole point &mdash; 7,043 real telecom customers with a known 'did they leave' label.</div><div class="have"><b>You now have:</b> a project folder, a clean environment, and the real dataset in <span class="pill">data/</span>.</div></div><div class="phase"><span class="tag">Phase B</span><h3>Build the model &mdash; train + track</h3><div class="do">Do: Create <span class="pill">src/preprocess.py</span> (shared by training AND serving):</div><pre class="code">&quot;&quot;&quot;Data loading + the feature pipeline. Shared by training and serving.&quot;&quot;&quot;
+import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+
+TARGET = &quot;Churn&quot;
+DROP = [&quot;customerID&quot;]
+
+
+def load_data(csv_path):
+    &quot;&quot;&quot;Read the CSV, fix TotalCharges, split into features X and target y (0/1).&quot;&quot;&quot;
+    df = pd.read_csv(csv_path)
+    # brand-new customers have a blank TotalCharges -&gt; make numeric, fill with 0
+    df[&quot;TotalCharges&quot;] = pd.to_numeric(df[&quot;TotalCharges&quot;], errors=&quot;coerce&quot;).fillna(0.0)
+    df = df.drop(columns=[c for c in DROP if c in df.columns])
+    y = (df[TARGET] == &quot;Yes&quot;).astype(int)
+    X = df.drop(columns=[TARGET])
+    return X, y
+
+
+def build_preprocessor(X):
+    &quot;&quot;&quot;Scale numbers, one-hot encode categories. handle_unknown=&#x27;ignore&#x27;
+    so a new category at prediction time never crashes the API.&quot;&quot;&quot;
+    num = X.select_dtypes(&quot;number&quot;).columns.tolist()
+    cat = X.select_dtypes(&quot;object&quot;).columns.tolist()
+    return ColumnTransformer([
+        (&quot;num&quot;, StandardScaler(), num),
+        (&quot;cat&quot;, OneHotEncoder(handle_unknown=&quot;ignore&quot;), cat),
+    ])</pre><div class="why">Why: One feature pipeline used everywhere = no 'train/serve skew' (the bug where the app prepares data differently than training did).</div><div class="do">Do: Create <span class="pill">src/train.py</span> &mdash; trains two models, logs each to MLflow, saves the best:</div><pre class="code">&quot;&quot;&quot;Train churn models, track every run in MLflow, save the best pipeline.
+
+Run:  python src/train.py
+Then: mlflow ui   (open http://127.0.0.1:5000 to see the runs)
+&quot;&quot;&quot;
+import os
+import joblib
+import mlflow
+import mlflow.sklearn
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_auc_score, average_precision_score, f1_score
+
+from preprocess import load_data, build_preprocessor
+
+DATA_PATH = os.getenv(&quot;DATA_PATH&quot;, &quot;data/telco_churn.csv&quot;)
+MODEL_PATH = os.getenv(&quot;MODEL_PATH&quot;, &quot;models/model.pkl&quot;)
+
+
+def get_models():
+    return {
+        &quot;logreg&quot;: LogisticRegression(max_iter=1000, class_weight=&quot;balanced&quot;),
+        &quot;random_forest&quot;: RandomForestClassifier(
+            n_estimators=300, class_weight=&quot;balanced&quot;, random_state=42, n_jobs=-1
+        ),
+    }
+
+
+def main():
+    X, y = load_data(DATA_PATH)
+    pre = build_preprocessor(X)
+    Xtr, Xte, ytr, yte = train_test_split(
+        X, y, test_size=0.2, stratify=y, random_state=42
+    )
+
+    mlflow.set_experiment(&quot;churn&quot;)
+    best_pipe, best_auc, best_name = None, -1.0, None
+
+    for name, clf in get_models().items():
+        with mlflow.start_run(run_name=name):
+            pipe = Pipeline([(&quot;pre&quot;, pre), (&quot;clf&quot;, clf)])
+            pipe.fit(Xtr, ytr)
+
+            proba = pipe.predict_proba(Xte)[:, 1]
+            auc = roc_auc_score(yte, proba)
+            ap = average_precision_score(yte, proba)
+            f1 = f1_score(yte, pipe.predict(Xte))
+
+            mlflow.log_param(&quot;model&quot;, name)
+            mlflow.log_metrics({&quot;roc_auc&quot;: auc, &quot;pr_auc&quot;: ap, &quot;f1&quot;: f1})
+            mlflow.sklearn.log_model(pipe, &quot;model&quot;)
+            print(f&quot;{name:14} ROC-AUC={auc:.4f}  PR-AUC={ap:.4f}  F1={f1:.4f}&quot;)
+
+            if auc &gt; best_auc:
+                best_pipe, best_auc, best_name = pipe, auc, name
+
+    os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+    joblib.dump(best_pipe, MODEL_PATH)
+    print(f&quot;\nBEST: {best_name}  (ROC-AUC={best_auc:.4f})  -&gt;  saved {MODEL_PATH}&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</pre><div class="why">Why: class_weight='balanced' handles the imbalance (only 26% churn). MLflow records every run so you can PROVE which model is best.</div><div class="do">Do: Run it, then open the MLflow UI:</div><pre class="code">python src/train.py
+# logreg         ROC-AUC=0.8416  PR-AUC=0.6327  F1=0.6136
+# random_forest  ROC-AUC=0.8222 ...
+# BEST: logreg  -&gt;  saved models/model.pkl
+
+mlflow ui        # open http://127.0.0.1:5000 to see both runs compared</pre><div class="why">Why: You get a saved <span class="pill">models/model.pkl</span> and a dashboard comparing runs by ROC-AUC.</div><div class="have"><b>You now have:</b> a trained model scoring ROC-AUC &asymp; 0.84, saved to disk, with every experiment tracked in MLflow.</div></div><div class="phase"><span class="tag">Phase C</span><h3>Serve the model &mdash; FastAPI</h3><div class="do">Do: Create <span class="pill">api/schema.py</span> &mdash; the typed input contract:</div><pre class="code">&quot;&quot;&quot;The exact input the API expects — one telecom customer.
+Field names must match the training columns.&quot;&quot;&quot;
+from pydantic import BaseModel
+
+
+class Customer(BaseModel):
+    gender: str
+    SeniorCitizen: int
+    Partner: str
+    Dependents: str
+    tenure: int
+    PhoneService: str
+    MultipleLines: str
+    InternetService: str
+    OnlineSecurity: str
+    OnlineBackup: str
+    DeviceProtection: str
+    TechSupport: str
+    StreamingTV: str
+    StreamingMovies: str
+    Contract: str
+    PaperlessBilling: str
+    PaymentMethod: str
+    MonthlyCharges: float
+    TotalCharges: float
+
+    model_config = {
+        &quot;json_schema_extra&quot;: {
+            &quot;example&quot;: {
+                &quot;gender&quot;: &quot;Female&quot;, &quot;SeniorCitizen&quot;: 0, &quot;Partner&quot;: &quot;Yes&quot;,
+                &quot;Dependents&quot;: &quot;No&quot;, &quot;tenure&quot;: 5, &quot;PhoneService&quot;: &quot;Yes&quot;,
+                &quot;MultipleLines&quot;: &quot;No&quot;, &quot;InternetService&quot;: &quot;Fiber optic&quot;,
+                &quot;OnlineSecurity&quot;: &quot;No&quot;, &quot;OnlineBackup&quot;: &quot;No&quot;,
+                &quot;DeviceProtection&quot;: &quot;No&quot;, &quot;TechSupport&quot;: &quot;No&quot;,
+                &quot;StreamingTV&quot;: &quot;Yes&quot;, &quot;StreamingMovies&quot;: &quot;Yes&quot;,
+                &quot;Contract&quot;: &quot;Month-to-month&quot;, &quot;PaperlessBilling&quot;: &quot;Yes&quot;,
+                &quot;PaymentMethod&quot;: &quot;Electronic check&quot;,
+                &quot;MonthlyCharges&quot;: 89.9, &quot;TotalCharges&quot;: 450.5,
+            }
+        }
+    }</pre><div class="why">Why: Pydantic rejects bad input automatically (wrong type / missing field) before it ever reaches the model.</div><div class="do">Do: Create <span class="pill">api/main.py</span> &mdash; loads the model, exposes <span class="pill">/predict</span>:</div><pre class="code">&quot;&quot;&quot;FastAPI service that serves the trained churn model.&quot;&quot;&quot;
+import os
+import joblib
+import pandas as pd
+from fastapi import FastAPI
+
+from schema import Customer
+
+MODEL_PATH = os.getenv(&quot;MODEL_PATH&quot;, &quot;models/model.pkl&quot;)
+
+app = FastAPI(title=&quot;Churn Scoring API&quot;, version=&quot;1.0&quot;)
+model = joblib.load(MODEL_PATH)
+
+
+@app.get(&quot;/health&quot;)
+def health():
+    return {&quot;status&quot;: &quot;ok&quot;, &quot;model&quot;: os.path.basename(MODEL_PATH)}
+
+
+@app.post(&quot;/predict&quot;)
+def predict(customer: Customer):
+    row = pd.DataFrame([customer.model_dump()])
+    proba = float(model.predict_proba(row)[0, 1])
+    return {
+        &quot;churn_probability&quot;: round(proba, 4),
+        &quot;will_churn&quot;: bool(proba &gt;= 0.5),
+        &quot;risk&quot;: &quot;high&quot; if proba &gt;= 0.5 else &quot;low&quot;,
+    }</pre><div class="why">Why: The SAME preprocess pipeline is inside model.pkl, so the API prepares data exactly like training did.</div><div class="do">Do: Run the API:</div><pre class="code">uvicorn main:app --app-dir api --reload
+# open http://127.0.0.1:8000/docs  and try POST /predict</pre><div class="why">Why: FastAPI gives you an automatic test page at /docs &mdash; no frontend needed to try it.</div><div class="have"><b>You now have:</b> a live API that turns one customer into a churn probability.</div></div><div class="phase"><span class="tag">Phase D</span><h3>Add the web app &mdash; Streamlit</h3><div class="do">Do: Create <span class="pill">dashboard.py</span>:</div><pre class="code">&quot;&quot;&quot;Streamlit UI: fill in a customer, get a churn score from the API.&quot;&quot;&quot;
+import os
+import requests
+import streamlit as st
+
+API_URL = os.getenv(&quot;API_URL&quot;, &quot;http://127.0.0.1:8000&quot;)
+
+st.set_page_config(page_title=&quot;Churn Predictor&quot;, page_icon=&quot;📉&quot;)
+st.title(&quot;Telecom Churn Predictor&quot;)
+st.caption(&quot;Enter a customer&#x27;s details to estimate the chance they will leave.&quot;)
+
+col1, col2 = st.columns(2)
+with col1:
+    gender = st.selectbox(&quot;Gender&quot;, [&quot;Female&quot;, &quot;Male&quot;])
+    senior = st.selectbox(&quot;Senior citizen&quot;, [0, 1])
+    partner = st.selectbox(&quot;Partner&quot;, [&quot;Yes&quot;, &quot;No&quot;])
+    dependents = st.selectbox(&quot;Dependents&quot;, [&quot;Yes&quot;, &quot;No&quot;])
+    tenure = st.slider(&quot;Tenure (months)&quot;, 0, 72, 5)
+    contract = st.selectbox(&quot;Contract&quot;, [&quot;Month-to-month&quot;, &quot;One year&quot;, &quot;Two year&quot;])
+    paperless = st.selectbox(&quot;Paperless billing&quot;, [&quot;Yes&quot;, &quot;No&quot;])
+    payment = st.selectbox(&quot;Payment method&quot;, [
+        &quot;Electronic check&quot;, &quot;Mailed check&quot;,
+        &quot;Bank transfer (automatic)&quot;, &quot;Credit card (automatic)&quot;])
+with col2:
+    phone = st.selectbox(&quot;Phone service&quot;, [&quot;Yes&quot;, &quot;No&quot;])
+    lines = st.selectbox(&quot;Multiple lines&quot;, [&quot;Yes&quot;, &quot;No&quot;, &quot;No phone service&quot;])
+    internet = st.selectbox(&quot;Internet service&quot;, [&quot;DSL&quot;, &quot;Fiber optic&quot;, &quot;No&quot;])
+    monthly = st.number_input(&quot;Monthly charges&quot;, 0.0, 200.0, 89.9)
+    total = st.number_input(&quot;Total charges&quot;, 0.0, 10000.0, 450.5)
+
+# services default to &quot;No&quot; to keep the form short
+payload = {
+    &quot;gender&quot;: gender, &quot;SeniorCitizen&quot;: senior, &quot;Partner&quot;: partner,
+    &quot;Dependents&quot;: dependents, &quot;tenure&quot;: tenure, &quot;PhoneService&quot;: phone,
+    &quot;MultipleLines&quot;: lines, &quot;InternetService&quot;: internet,
+    &quot;OnlineSecurity&quot;: &quot;No&quot;, &quot;OnlineBackup&quot;: &quot;No&quot;, &quot;DeviceProtection&quot;: &quot;No&quot;,
+    &quot;TechSupport&quot;: &quot;No&quot;, &quot;StreamingTV&quot;: &quot;No&quot;, &quot;StreamingMovies&quot;: &quot;No&quot;,
+    &quot;Contract&quot;: contract, &quot;PaperlessBilling&quot;: paperless,
+    &quot;PaymentMethod&quot;: payment, &quot;MonthlyCharges&quot;: monthly, &quot;TotalCharges&quot;: total,
+}
+
+if st.button(&quot;Predict&quot;):
+    try:
+        r = requests.post(f&quot;{API_URL}/predict&quot;, json=payload, timeout=10)
+        r.raise_for_status()
+        out = r.json()
+        p = out[&quot;churn_probability&quot;]
+        st.metric(&quot;Churn probability&quot;, f&quot;{p*100:.1f}%&quot;)
+        (st.error if out[&quot;will_churn&quot;] else st.success)(
+            f&quot;Risk: {out[&#x27;risk&#x27;].upper()}&quot;)
+    except Exception as e:
+        st.warning(f&quot;Could not reach the API at {API_URL}. Is it running? ({e})&quot;)</pre><div class="why">Why: Streamlit turns a Python script into a web form in ~40 lines. It just calls your API.</div><div class="do">Do: Run it (keep the API running in another terminal):</div><pre class="code">streamlit run dashboard.py
+# opens http://127.0.0.1:8501 - fill the form, click Predict</pre><div class="why">Why: Now anyone can score a customer by filling a form &mdash; no code.</div><div class="have"><b>You now have:</b> a clickable web app that shows a churn score and risk level.</div></div><div class="phase"><span class="tag">Phase E</span><h3>Prove quality &mdash; tests + Docker</h3><div class="do">Do: Create <span class="pill">tests/test_pipeline.py</span> &mdash; a model-quality gate:</div><pre class="code">&quot;&quot;&quot;CI tests: the data loads, the pipeline trains, and it predicts sanely.
+These run in GitHub Actions on every push.&quot;&quot;&quot;
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), &quot;..&quot;, &quot;src&quot;))
+
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
+
+from preprocess import load_data, build_preprocessor
+
+DATA = os.getenv(&quot;DATA_PATH&quot;, &quot;data/telco_churn.csv&quot;)
+
+
+def test_data_loads():
+    X, y = load_data(DATA)
+    assert len(X) == len(y) &gt; 1000
+    assert set(y.unique()) &lt;= {0, 1}
+    assert &quot;customerID&quot; not in X.columns
+
+
+def test_pipeline_trains_and_beats_baseline():
+    X, y = load_data(DATA)
+    pre = build_preprocessor(X)
+    Xtr, Xte, ytr, yte = train_test_split(
+        X, y, test_size=0.2, stratify=y, random_state=0)
+    pipe = Pipeline([(&quot;pre&quot;, pre),
+                     (&quot;clf&quot;, LogisticRegression(max_iter=1000, class_weight=&quot;balanced&quot;))])
+    pipe.fit(Xtr, ytr)
+    auc = roc_auc_score(yte, pipe.predict_proba(Xte)[:, 1])
+    assert auc &gt; 0.78, f&quot;model regressed: ROC-AUC={auc:.3f}&quot;</pre><div class="why">Why: This test FAILS if a future change drops accuracy below 0.78. It stops you shipping a worse model by accident.</div><div class="do">Do: Run the tests:</div><pre class="code">pytest -v
+# test_data_loads PASSED
+# test_pipeline_trains_and_beats_baseline PASSED</pre><div class="why">Why: Green = data still loads and the model still meets the bar.</div><div class="do">Do: Create the <span class="pill">Dockerfile</span> so the API runs anywhere:</div><pre class="code"># Container for the scoring API. Build: docker build -t churn-api .
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY src ./src
+COPY api ./api
+COPY models ./models
+
+# Render/other hosts set $PORT; default to 8000 locally
+ENV PORT=8000
+WORKDIR /app/api
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT}</pre><div class="why">Why: A container packs Python + libraries + your code into one image that runs identically on any host.</div><div class="have"><b>You now have:</b> a passing quality gate and a container that runs the API the same everywhere.</div></div><div class="phase"><span class="tag">Phase F</span><h3>Automate &mdash; CI/CD + deploy</h3><div class="do">Do: Create <span class="pill">.github/workflows/ci.yml</span> &mdash; test on every push:</div><pre class="code"># CI: on every push, prove the data loads and the model still beats the baseline.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: &quot;3.11&quot;
+      - run: pip install -r requirements.txt
+      - name: Run tests (data + model quality gate)
+        run: pytest -v</pre><div class="why">Why: This is CI: the robot runs your quality gate automatically. Red = the change is blocked.</div><div class="do">Do: Create <span class="pill">.github/workflows/retrain.yml</span> &mdash; retrain weekly by itself:</div><pre class="code"># CD / auto-retrain: retrain the model every week (or on demand) and commit
+# the new model.pkl. A push to main then triggers the deploy (Render auto-deploys).
+name: Retrain
+
+on:
+  schedule:
+    - cron: &quot;0 3 * * 1&quot;      # every Monday 03:00 UTC
+  workflow_dispatch: {}        # ...or run it manually from the Actions tab
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: &quot;3.11&quot;
+      - run: pip install -r requirements.txt
+      - name: Retrain
+        run: python src/train.py
+      - name: Commit the new model if it changed
+        run: |
+          git config user.name  &quot;github-actions&quot;
+          git config user.email &quot;actions@github.com&quot;
+          git add models/model.pkl
+          git commit -m &quot;chore: weekly model retrain&quot; || echo &quot;no change&quot;
+          git push</pre><div class="why">Why: This is the MLOps loop: the model refreshes on a schedule and commits itself &mdash; no human needed.</div><div class="do">Do: Deploy (free, no card):</div><pre class="code"># API  -&gt; Render  (Docker, or: uvicorn main:app --app-dir api --host 0.0.0.0 --port $PORT)
+# UI   -&gt; Streamlit Community Cloud  (set API_URL to your Render URL)
+# Render auto-deploys every push to main.</pre><div class="why">Why: Free hosting for both halves. A push to main updates the live app automatically.</div><div class="have"><b>You now have:</b> a public live app, tests on every push, and a model that retrains itself &mdash; a real ML system.</div></div>
+
+<h2>Test it like a mentor (submit these)</h2>
+<table>
+  <tr><th>Check</th><th>How</th><th>Expected</th></tr>
+  <tr><td>Model quality</td><td><span class="pill">python src/train.py</span></td><td>ROC-AUC &ge; 0.83, model.pkl saved</td></tr>
+  <tr><td>Experiments tracked</td><td><span class="pill">mlflow ui</span></td><td>2 runs compared by ROC-AUC</td></tr>
+  <tr><td>API works</td><td>POST /predict a high-risk customer</td><td>high probability + "risk":"high"</td></tr>
+  <tr><td>API works (opposite)</td><td>POST a long-tenure 2-year customer</td><td>low probability + "risk":"low"</td></tr>
+  <tr><td>CI is green</td><td>push to GitHub</td><td>Actions tab shows a green check</td></tr>
+  <tr><td>Live link</td><td>open the deployed Streamlit URL</td><td>form returns a score</td></tr>
+</table>
+<div class="good"><b>Proven baseline:</b> on the real data this scores ROC-AUC 0.8416; a new month-to-month fiber
+customer returns ~89% churn, a long-tenure two-year customer ~6%. Your numbers should be in the same range.</div>
+
+<h2>The senior concepts (be ready to explain these)</h2>
+<ul>
+  <li><b>Class imbalance</b> &mdash; only 26% churn, so plain accuracy lies. Use ROC-AUC / PR-AUC and <span class="pill">class_weight="balanced"</span>.</li>
+  <li><b>No train/serve skew</b> &mdash; the SAME preprocess pipeline trains and serves, packed inside model.pkl.</li>
+  <li><b>Experiment tracking</b> &mdash; MLflow proves which model won, instead of "trust me".</li>
+  <li><b>Quality gate in CI</b> &mdash; a test blocks any change that makes the model worse.</li>
+  <li><b>Automated retrain</b> &mdash; the model refreshes on a schedule; that loop is what "MLOps" means.</li>
+</ul>
+
+<h2>Submission checklist</h2>
+<ul>
+  <li>&#9744; GitHub repo with all files (model + data included so it runs; <span class="pill">.env</span> and <span class="pill">mlruns/</span> ignored)</li>
+  <li>&#9744; A green CI run in the Actions tab</li>
+  <li>&#9744; Screenshot of the MLflow UI comparing the two runs</li>
+  <li>&#9744; The live Streamlit link (or a short screen recording)</li>
+  <li>&#9744; README explaining the dataset and how to run it</li>
+</ul>
+
+<h2>Mentor's evaluation rubric (100 points)</h2>
+<table>
+  <tr><th>What is checked</th><th>Points</th></tr>
+  <tr><td>Clean data prep + shared train/serve pipeline (no skew)</td><td class="pts">15</td></tr>
+  <tr><td>Model handles imbalance; ROC-AUC &ge; 0.83 reported (not just accuracy)</td><td class="pts">15</td></tr>
+  <tr><td>MLflow tracking of at least 2 compared runs</td><td class="pts">15</td></tr>
+  <tr><td>Working FastAPI /predict with a typed schema</td><td class="pts">15</td></tr>
+  <tr><td>Streamlit UI calls the API and shows the score</td><td class="pts">10</td></tr>
+  <tr><td>Tests pass and act as a real quality gate</td><td class="pts">10</td></tr>
+  <tr><td>CI green on push + weekly retrain workflow present</td><td class="pts">10</td></tr>
+  <tr><td>Live deployed link (Render + Streamlit Cloud)</td><td class="pts">10</td></tr>
+  <tr><td><b>Total</b></td><td class="pts"><b>100</b></td></tr>
+</table>
+<p class="muted"><b>60 of 100</b> points are on the MLOps parts (pipeline, tracking, serving, CI/CD) &mdash; that is what makes this senior level, not the model score alone.</p>
+
+<div class="note"><b>Free stack, no Hugging Face:</b> scikit-learn &middot; MLflow &middot; FastAPI &middot; Streamlit &middot;
+Docker &middot; GitHub Actions &middot; Render + Streamlit Community Cloud for hosting. Total cost: $0.</div>
+
+</div></body></html>

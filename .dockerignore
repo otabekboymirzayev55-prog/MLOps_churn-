@@ -1,0 +1,9 @@
+.git
+.pytest_cache
+.venv
+venv
+__pycache__
+mlruns
+mlflow.db
+Churn_MLOps_Guide_EN.html
+
