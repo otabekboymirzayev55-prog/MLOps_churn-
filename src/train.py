@@ -69,7 +69,6 @@ def train_models(
         random_state=42,
     )
 
-    preprocessor = build_preprocessor(X_train)
     mlflow.set_experiment(experiment_name)
 
     best_pipeline = None
@@ -81,7 +80,7 @@ def train_models(
         with mlflow.start_run(run_name=name):
             pipeline = Pipeline(
                 steps=[
-                    ("preprocess", preprocessor),
+                    ("preprocess", build_preprocessor(X_train)),
                     ("classifier", classifier),
                 ]
             )

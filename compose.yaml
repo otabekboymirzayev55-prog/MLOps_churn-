@@ -1,0 +1,31 @@
+services:
+  train:
+    build: .
+    command: python src/train.py
+    environment:
+      MODEL_PATH: /models/model.pkl
+    volumes:
+      - model-data:/models
+  api:
+    build: .
+    environment:
+      MODEL_PATH: /models/model.pkl
+    volumes:
+      - model-data:/models:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      train:
+        condition: service_completed_successfully
+  dashboard:
+    build: .
+    command: streamlit run dashboard.py --server.address=0.0.0.0 --server.port=8501
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      api:
+        condition: service_healthy
+volumes:
+  model-data:

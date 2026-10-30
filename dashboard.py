@@ -5,8 +5,8 @@ from __future__ import annotations
 import os
 from typing import Any
 
-import requests
 import streamlit as st
+from dashboard_client import call_api as request_prediction
 
 try:
     API_URL = st.secrets["API_URL"]
@@ -76,13 +76,20 @@ def build_payload() -> dict[str, Any]:
             else:
                 payload[key] = st.selectbox(label, options, index=options.index(DEFAULTS[key]))
 
+    if payload["PhoneService"] == "No":
+        payload["MultipleLines"] = "No phone service"
+    elif payload["MultipleLines"] == "No phone service":
+        payload["MultipleLines"] = "No"
+    for key in ("OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies"):
+        if payload["InternetService"] == "No":
+            payload[key] = "No internet service"
+        elif payload[key] == "No internet service":
+            payload[key] = "No"
     return payload
 
 
 def call_api(payload: dict[str, Any]) -> dict[str, Any]:
-    response = requests.post(f"{API_URL.rstrip('/')}/predict", json=payload, timeout=30)
-    response.raise_for_status()
-    return response.json()
+    return request_prediction(payload, API_URL)
 
 
 st.set_page_config(page_title="Churn Predictor", page_icon="📉", layout="centered")
@@ -102,4 +109,3 @@ if submitted:
         st.metric("Churn probability", f"{result['churn_probability']:.2%}")
         st.write(f"Risk: `{result['risk']}`")
         st.write(f"Will churn: `{result['will_churn']}`")
-

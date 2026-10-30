@@ -19,8 +19,19 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.lock.txt
 
       - name: Train the model
         run: python src/train.py
 
+      - name: Validate model and API
+        run: pytest -q
+
+      - name: Save trained model
+        uses: actions/upload-artifact@v4
+        with:
+          name: churn-model-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            models/model.pkl
+            requirements.lock.txt
+          if-no-files-found: error

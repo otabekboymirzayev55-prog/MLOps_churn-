@@ -6,4 +6,7 @@ __pycache__
 mlruns
 mlflow.db
 Churn_MLOps_Guide_EN.html
-
+work
+outputs
+.env
+.streamlit/secrets.toml
