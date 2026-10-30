@@ -2,6 +2,8 @@ services:
   train:
     build: .
     command: python src/train.py
+    healthcheck:
+      disable: true
     environment:
       MODEL_PATH: /models/model.pkl
     volumes:
@@ -20,6 +22,11 @@ services:
   dashboard:
     build: .
     command: streamlit run dashboard.py --server.address=0.0.0.0 --server.port=8501
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     environment:
       API_URL: http://api:8000
     ports:
